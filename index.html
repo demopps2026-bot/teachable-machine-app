@@ -1,18 +1,44 @@
 <!DOCTYPE html>
+
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+
+    #preview {
+      max-width: 90%;
+      margin-top: 15px;
+    }
+
+    #prediction {
+      font-size: 24px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+  </style>
+
 </head>
 
 <body>
 
 <h2>My Teachable Machine</h2>
 
-<input type="file" id="photo" accept="image/*">
+<input
+type="file"
+id="photo"
+accept="image/*"
+capture="environment">
 
 <br><br>
 
@@ -23,21 +49,28 @@
 <script>
 
 const MODEL_URL =
-"https://teachablemachine.withgoogle.com/models/Ix8pLzH7N/";
+"https://teachablemachine.withgoogle.com/models/SE5HAWtYTG/";
 
 let model;
 
+/* -----------------------------
+   LOAD TEACHABLE MACHINE MODEL
+------------------------------ */
+
 async function start() {
+
     try {
+
         model = await tmImage.load(
             MODEL_URL + "model.json",
             MODEL_URL + "metadata.json"
         );
 
         document.getElementById("prediction").innerText =
-            "Model ready! Choose a picture.";
+            "Model ready!";
 
     } catch (error) {
+
         document.getElementById("prediction").innerText =
             "Model error: " + error.message;
 
@@ -45,47 +78,110 @@ async function start() {
     }
 }
 
-document.getElementById("photo").addEventListener("change", function(event) {
 
-    const file = event.target.files[0];
+/* -----------------------------
+   PREDICT PHOTO
+------------------------------ */
 
-    if (!file) return;
+document.getElementById("photo").addEventListener(
+    "change",
+    function(event) {
 
-    const image = document.getElementById("preview");
+        const file = event.target.files[0];
 
-    image.src = URL.createObjectURL(file);
+        if (!file) return;
 
-    image.onload = async function() {
+        const image = document.getElementById("preview");
 
-        try {
+        image.src = URL.createObjectURL(file);
 
-            const predictions = await model.predict(image);
+        image.onload = async function() {
 
-            let best = predictions[0];
+            try {
 
-            for (let i = 1; i < predictions.length; i++) {
-                if (predictions[i].probability > best.probability) {
-                    best = predictions[i];
+                const predictions =
+                    await model.predict(image);
+
+                let best = predictions[0];
+
+                for (
+                    let i = 1;
+                    i < predictions.length;
+                    i++
+                ) {
+
+                    if (
+                        predictions[i].probability >
+                        best.probability
+                    ) {
+
+                        best = predictions[i];
+
+                    }
                 }
+
+
+                /* -----------------------------
+                   RESULT
+                ------------------------------ */
+
+                const percentage =
+                    (best.probability * 100).toFixed(1);
+
+                const result =
+                    best.className +
+                    " - " +
+                    percentage +
+                    "%";
+
+
+                /* Show result on webpage */
+
+                document.getElementById(
+                    "prediction"
+                ).innerText = result;
+
+
+                /* Send result to MIT App Inventor */
+
+                if (
+                    window.AppInventor &&
+                    window.AppInventor.setWebViewString
+                ) {
+
+                    window.AppInventor.setWebViewString(
+                        result
+                    );
+
+                }
+
+            } catch (error) {
+
+                document.getElementById(
+                    "prediction"
+                ).innerText =
+                    "Prediction error: " +
+                    error.message;
+
+                console.error(error);
+
             }
 
-            document.getElementById("prediction").innerText =
-                best.className + " - " +
-                (best.probability * 100).toFixed(1) + "%";
+        };
 
-        } catch (error) {
+    }
+);
 
-            document.getElementById("prediction").innerText =
-                "Prediction error: " + error.message;
 
-            console.error(error);
-        }
-    };
-});
+/* START MODEL */
 
 start();
 
 </script>
+
+</body>
+</html>
+
 
 </body>
 </html>
