@@ -1,12 +1,10 @@
 <!DOCTYPE html>
-
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
 
   <style>
@@ -27,7 +25,6 @@
       margin-top: 20px;
     }
   </style>
-
 </head>
 
 <body>
@@ -35,10 +32,10 @@
 <h2>My Teachable Machine</h2>
 
 <input
-type="file"
-id="photo"
-accept="image/*"
-capture="environment">
+  type="file"
+  id="photo"
+  accept="image/*"
+  capture="environment">
 
 <br><br>
 
@@ -49,139 +46,166 @@ capture="environment">
 <script>
 
 const MODEL_URL =
-"https://teachablemachine.withgoogle.com/models/SE5HAWtYTG/";
+  "https://teachablemachine.withgoogle.com/models/SE5HAWtYTG/";
 
 let model;
 
+
 /* -----------------------------
    LOAD TEACHABLE MACHINE MODEL
------------------------------- */
+----------------------------- */
 
 async function start() {
 
-    try {
+  try {
 
-        model = await tmImage.load(
-            MODEL_URL + "model.json",
-            MODEL_URL + "metadata.json"
-        );
+    model = await tmImage.load(
+      MODEL_URL + "model.json",
+      MODEL_URL + "metadata.json"
+    );
 
-        document.getElementById("prediction").innerText =
-            "Model ready!";
+    document.getElementById("prediction").innerText =
+      "Model ready!";
 
-    } catch (error) {
+  } catch (error) {
 
-        document.getElementById("prediction").innerText =
-            "Model error: " + error.message;
+    document.getElementById("prediction").innerText =
+      "Model error: " + error.message;
 
-        console.error(error);
-    }
+    console.error(error);
+  }
 }
 
 
 /* -----------------------------
    PREDICT PHOTO
------------------------------- */
+----------------------------- */
 
 document.getElementById("photo").addEventListener(
-    "change",
-    function(event) {
+  "change",
+  function(event) {
 
-        const file = event.target.files[0];
+    const file = event.target.files[0];
 
-        if (!file) return;
+    if (!file) return;
 
-        const image = document.getElementById("preview");
+    const image = document.getElementById("preview");
 
-        image.src = URL.createObjectURL(file);
+    image.src = URL.createObjectURL(file);
 
-        image.onload = async function() {
+    image.onload = async function() {
 
-            try {
+      try {
 
-                const predictions =
-                    await model.predict(image);
+        const predictions =
+          await model.predict(image);
 
-                let best = predictions[0];
+        let best = predictions[0];
 
-                for (
-                    let i = 1;
-                    i < predictions.length;
-                    i++
-                ) {
+        for (
+          let i = 1;
+          i < predictions.length;
+          i++
+        ) {
 
-                    if (
-                        predictions[i].probability >
-                        best.probability
-                    ) {
+          if (
+            predictions[i].probability >
+            best.probability
+          ) {
 
-                        best = predictions[i];
+            best = predictions[i];
 
-                    }
-                }
-
-
-                /* -----------------------------
-                   RESULT
-                ------------------------------ */
-
-                const percentage =
-                    (best.probability * 100).toFixed(1);
-
-                const result =
-                    best.className +
-                    " - " +
-                    percentage +
-                    "%";
+          }
+        }
 
 
-                /* Show result on webpage */
+        /* -----------------------------
+           RESULT
+        ----------------------------- */
 
-                document.getElementById(
-                    "prediction"
-                ).innerText = result;
+        const percentage =
+          (best.probability * 100).toFixed(1);
+
+        const result =
+          best.className +
+          " - " +
+          percentage +
+          "%";
 
 
-                /* Send result to MIT App Inventor */
+        /* Show result on webpage */
 
-                if (
-                    window.AppInventor &&
-                    window.AppInventor.setWebViewString
-                ) {
+        document.getElementById(
+          "prediction"
+        ).innerText = result;
 
-                    window.AppInventor.setWebViewString(
-                        result
-                    );
 
-                }
+        /* Send result to MIT App Inventor */
 
-            } catch (error) {
+        if (
+          window.AppInventor &&
+          window.AppInventor.setWebViewString
+        ) {
 
-                document.getElementById(
-                    "prediction"
-                ).innerText =
-                    "Prediction error: " +
-                    error.message;
+          window.AppInventor.setWebViewString(
+            result
+          );
 
-                console.error(error);
+        }
 
-            }
+      } catch (error) {
 
-        };
+        document.getElementById(
+          "prediction"
+        ).innerText =
+          "Prediction error: " +
+          error.message;
 
-    }
+        console.error(error);
+
+      }
+
+    };
+
+  }
 );
 
 
-/* START MODEL */
+/* -----------------------------
+   RECEIVE COMMAND FROM
+   MIT APP INVENTOR
+----------------------------- */
+
+setInterval(function() {
+
+  if (
+    window.AppInventor &&
+    window.AppInventor.getWebViewString
+  ) {
+
+    const command =
+      window.AppInventor.getWebViewString();
+
+    if (command === "takephoto") {
+
+      document.getElementById("photo").click();
+
+      window.AppInventor.setWebViewString("");
+
+    }
+
+  }
+
+}, 300);
+
+
+/* -----------------------------
+   START MODEL
+----------------------------- */
 
 start();
 
 </script>
-
-</body>
-</html>
-
 
 </body>
 </html>
