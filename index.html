@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+</head>
+
+<body>
+
+<h2>My Teachable Machine</h2>
+
+<input type="file" id="photo" accept="image/*">
+
+<br><br>
+
+<img id="preview" width="300">
+
+<h2 id="prediction">Loading model...</h2>
+
+<script>
+
+const MODEL_URL =
+"https://teachablemachine.withgoogle.com/models/Ix8pLzH7N/";
+
+let model;
+
+async function start() {
+    try {
+        model = await tmImage.load(
+            MODEL_URL + "model.json",
+            MODEL_URL + "metadata.json"
+        );
+
+        document.getElementById("prediction").innerText =
+            "Model ready! Choose a picture.";
+
+    } catch (error) {
+        document.getElementById("prediction").innerText =
+            "Model error: " + error.message;
+
+        console.error(error);
+    }
+}
+
+document.getElementById("photo").addEventListener("change", function(event) {
+
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    const image = document.getElementById("preview");
+
+    image.src = URL.createObjectURL(file);
+
+    image.onload = async function() {
+
+        try {
+
+            const predictions = await model.predict(image);
+
+            let best = predictions[0];
+
+            for (let i = 1; i < predictions.length; i++) {
+                if (predictions[i].probability > best.probability) {
+                    best = predictions[i];
+                }
+            }
+
+            document.getElementById("prediction").innerText =
+                best.className + " - " +
+                (best.probability * 100).toFixed(1) + "%";
+
+        } catch (error) {
+
+            document.getElementById("prediction").innerText =
+                "Prediction error: " + error.message;
+
+            console.error(error);
+        }
+    };
+});
+
+start();
+
+</script>
+
+</body>
+</html>
