@@ -124,34 +124,18 @@ document.getElementById("photo").addEventListener(
         ----------------------------- */
 
         const percentage =
-          (best.probability * 100).toFixed(1);
+  (best.probability * 100).toFixed(1);
 
-        const result =
-          best.className +
-          " - " +
-          percentage +
-          "%";
+const result = best.className;
 
+document.getElementById("prediction").innerText = result;
 
-        /* Show result on webpage */
-
-        document.getElementById(
-          "prediction"
-        ).innerText = result;
-
-
-        /* Send result to MIT App Inventor */
-
-        if (
-          window.AppInventor &&
-          window.AppInventor.setWebViewString
-        ) {
-
-          window.AppInventor.setWebViewString(
-            result
-          );
-
-        }
+if (
+  window.AppInventor &&
+  window.AppInventor.setWebViewString
+) {
+  window.AppInventor.setWebViewString(result);
+}
 
       } catch (error) {
 
