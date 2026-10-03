@@ -11,25 +11,31 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin: 20px;
+      margin: 0;
+      padding: 10px;
+      background: transparent;
+    }
+
+    #photo {
+      margin: 10px;
     }
 
     #preview {
       max-width: 90%;
-      margin-top: 15px;
+      max-height: 250px;
+      margin-top: 10px;
+      border-radius: 15px;
     }
 
     #prediction {
       font-size: 24px;
       font-weight: bold;
-      margin-top: 20px;
+      margin-top: 15px;
     }
   </style>
 </head>
 
 <body>
-
-<h2>My Teachable Machine</h2>
 
 <input
   type="file"
@@ -37,23 +43,19 @@
   accept="image/*"
   capture="environment">
 
-<br><br>
+<img id="preview">
 
-<img id="preview" width="300">
-
-<h2 id="prediction">Loading model...</h2>
+<div id="prediction">Loading model...</div>
 
 <script>
 
 const MODEL_URL =
-  "https://teachablemachine.withgoogle.com/models/SE5HAWtYTG/";
+"https://teachablemachine.withgoogle.com/models/SE5HAWtYTG/";
 
-let model;
+let model = null;
 
 
-/* -----------------------------
-   LOAD TEACHABLE MACHINE MODEL
------------------------------ */
+/* LOAD MODEL */
 
 async function start() {
 
@@ -65,29 +67,27 @@ async function start() {
     );
 
     document.getElementById("prediction").innerText =
-      "Model ready!";
+      "Ready";
 
   } catch (error) {
 
     document.getElementById("prediction").innerText =
-      "Model error: " + error.message;
+      "Model error";
 
     console.error(error);
   }
 }
 
 
-/* -----------------------------
-   PREDICT PHOTO
------------------------------ */
+/* TAKE PHOTO AND PREDICT */
 
 document.getElementById("photo").addEventListener(
   "change",
-  function(event) {
+  async function(event) {
 
     const file = event.target.files[0];
 
-    if (!file) return;
+    if (!file || !model) return;
 
     const image = document.getElementById("preview");
 
@@ -102,48 +102,39 @@ document.getElementById("photo").addEventListener(
 
         let best = predictions[0];
 
-        for (
-          let i = 1;
-          i < predictions.length;
-          i++
-        ) {
+        for (let i = 1; i < predictions.length; i++) {
 
           if (
             predictions[i].probability >
             best.probability
           ) {
-
             best = predictions[i];
-
           }
         }
 
+        /* ONLY OBJECT NAME */
 
-        /* -----------------------------
-           RESULT
-        ----------------------------- */
+        const result = best.className;
 
-        const percentage =
-  (best.probability * 100).toFixed(1);
+        document.getElementById("prediction").innerText =
+          result;
 
-const result = best.className;
 
-document.getElementById("prediction").innerText = result;
+        /* SEND OBJECT NAME TO MIT APP INVENTOR */
 
-if (
-  window.AppInventor &&
-  window.AppInventor.setWebViewString
-) {
-  window.AppInventor.setWebViewString(result);
-}
+        if (
+          window.AppInventor &&
+          window.AppInventor.setWebViewString
+        ) {
+
+          window.AppInventor.setWebViewString(result);
+
+        }
 
       } catch (error) {
 
-        document.getElementById(
-          "prediction"
-        ).innerText =
-          "Prediction error: " +
-          error.message;
+        document.getElementById("prediction").innerText =
+          "Prediction error";
 
         console.error(error);
 
@@ -155,10 +146,9 @@ if (
 );
 
 
-/* -----------------------------
-   RECEIVE COMMAND FROM
-   MIT APP INVENTOR
------------------------------ */
+/* LISTEN FOR COMMAND FROM MIT APP INVENTOR */
+
+let lastCommand = "";
 
 setInterval(function() {
 
@@ -170,11 +160,14 @@ setInterval(function() {
     const command =
       window.AppInventor.getWebViewString();
 
-    if (command === "takephoto") {
+    if (
+      command === "takephoto" &&
+      command !== lastCommand
+    ) {
+
+      lastCommand = command;
 
       document.getElementById("photo").click();
-
-      window.AppInventor.setWebViewString("");
 
     }
 
@@ -183,9 +176,7 @@ setInterval(function() {
 }, 300);
 
 
-/* -----------------------------
-   START MODEL
------------------------------ */
+/* START */
 
 start();
 
